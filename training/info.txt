@@ -1,0 +1,12 @@
+windows - using cmd
+path to opencv dir = C:\Users\Sameb\Documents\opencv\build\x64\vc15\bin
+path to project = C:\Users\Sameb\Documents\cis365-cvproject\training
+
+generate positive image annotation:
+C:\Users\Sameb\Documents\opencv\build\x64\vc15\bin\opencv_annotation —-annotations="C:\Users\Sameb\Documents\cis365-cvproject\training\pos.txt" —-images="C:\Users\Sameb\Documents\cis365-cvproject\training\positive"
+
+generate positive cascade (within mustachify folder)
+C:\Users\Sameb\Documents\opencv\build\x64\vc15\bin\opencv_createsamples -info pos.txt -bg neg.txt -vec pos.vec -w 24 -h 24
+
+training
+C:\Users\Sameb\Documents\opencv\build\x64\vc15\bin\opencv_traincascade -data output -vec pos.vec -bg neg.txt -numPos 57 -numNeg 40 -w 24 -h 24 -precalcValBufSize 1024 -precalcIdxBufSize 1024 -numStages 6 -acceptanceRatioBreakValue 1.0e-5
