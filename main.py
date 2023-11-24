@@ -68,12 +68,12 @@ def mustacheifyVideo():
         img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         faces = faceCascade.detectMultiScale(img_grey)
         for (x, y, w, h) in faces:
-            face = cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),1)
+            # cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),1)
             face_grey = img_grey[y:y+h, x:x+w]
             face_color = img[y:y+h, x:x+w]
             nose = noseCascade.detectMultiScale(face_grey)
             for (nx,ny,nw,nh) in nose:
-                cv2.rectangle(face_color,(nx,ny),(nx+nw,ny+nh),(0,255,0),1)
+                # cv2.rectangle(face_color,(nx,ny),(nx+nw,ny+nh),(0,255,0),1)
                 mustacheWidth =  3 * nw
                 mustacheHeight = mustacheWidth * origHeight / origWidth
                 x1 = int(nx - (mustacheWidth/4))
