@@ -135,7 +135,11 @@ def mustacheifyVideo():
 def mustacheifyImg(file):
     img = cv2.imread(file)
     output = processMustacheify(img)
-    cv2.imshow(output)
+    while True:
+        cv2.imshow('img', output)
+        k = cv2.waitKey(30) & 0xff
+        if k == 27:
+            break
         
 # process an image or frame, add google eyes
 def processGoogleEye(img):
@@ -199,32 +203,36 @@ def googleEyeVideo():
 def googleEyeImg(file):
     img = cv2.imread(file)
     output = processGoogleEye(img)
-    cv2.imshow(output)
+    while True:
+        cv2.imshow('img', output)
+        k = cv2.waitKey(30) & 0xff
+        if k == 27:
+            break
 
 ### handle args ###
 parser = argparse.ArgumentParser()
 parser.add_argument("-func", help="which function to run (mustacheify, googleeye, etc..)")
 parser.add_argument("-img", help="image to run function, if none with run video")
 args = parser.parse_args()
-func = str(args.func).lower()
-img = str(args.img).lower()
+func = str(args.func)
+img = str(args.img)
 if (func == 'm' or func == 'mustache' or func == 'mustacheify'):
-    if img != 'none':
+    if img != 'None':
         mustacheifyImg(img)
     else:
         mustacheifyVideo()
 elif (func == 'g' or func == 'google' or func == 'googleeye' or func == 'googleeyes'):
-    if img != 'none':
+    if img != 'None':
         googleEyeImg(img)
     else:
         googleEyeVideo()
 elif (func == 't' or func == 'test'):
-    if img != 'none':
+    if img != 'None':
         cascadeTest()
     else:
         videoTest()
 elif (func == 'd' or func == 'detect'):
-    if img != 'none':
+    if img != 'None':
         mustacheDetectVideo()
     else:
         mustacheDetectVideo()
