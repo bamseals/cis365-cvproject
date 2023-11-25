@@ -41,7 +41,38 @@ def videoTest():
     cv2.destroyAllWindows()
 
 def mustacheDetectVideo():
-    cascadeFile = getLocalFile('\cascades\mustache8.xml')
+    mustacheCascadeFile = getLocalFile('\cascades\mustache8.xml')
+    faceCascadeFile = getLocalFile('\cascades\pretrained\haarcascade_frontalface_default.xml')
+    noseCascadeFile = getLocalFile('\cascades\pretrained\haarcascade_mcs_nose.xml')
+    mustacheCascade = cv2.CascadeClassifier(mustacheCascadeFile)
+    faceCascade = cv2.CascadeClassifier(faceCascadeFile)
+    noseCascade = cv2.CascadeClassifier(noseCascadeFile)
+    stream = cv2.VideoCapture(0)
+    while True:
+        _, img = stream.read()
+        img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        faces = faceCascade.detectMultiScale(img_grey)
+        for (x, y, w, h) in faces:
+            cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),1)
+            face_grey = img_grey[y:y+h, x:x+w]
+            face_color = img[y:y+h, x:x+w]
+            nose_y = 0
+            nose = noseCascade.detectMultiScale(face_grey)
+            mustache = mustacheCascade.detectMultiScale(face_color)
+            for (nx, ny, nw, nh) in nose:
+                if ny > nose_y:
+                    nose_y = ny
+                cv2.rectangle(face_color,(nx,ny),(nx+nw,ny+nh),(0,255,0),1)
+            for (mx, my, mw, mh) in mustache:
+                if my > nose_y:
+                    cv2.rectangle(face_color,(mx,my),(mx+mw,my+mh),(0,0,255),1)
+        cv2.imshow('img', img)
+        k = cv2.waitKey(30) & 0xff
+        if k == 27:
+            break
+    stream.release()
+    cv2.destroyAllWindows()
+    
 
 # handle adding a mustache to an image or frame
 def processMustacheify(img):
@@ -192,3 +223,8 @@ elif (func == 't' or func == 'test'):
         cascadeTest()
     else:
         videoTest()
+elif (func == 'd' or func == 'detect'):
+    if img != 'none':
+        mustacheDetectVideo()
+    else:
+        mustacheDetectVideo()
