@@ -3,10 +3,15 @@ CIS 365 - Final Project - OpenCV Image Utilities
 Sam Beals, Brett Gritters, Travis Johnson
 
 how to use:
+
 "python main.py -func m" displays a mustache overlay on webcam
+
 "python main.py -func m -img imagename.jpg" displays a mustache overlay on an individual image
+
 "python main.py -func g" displays a google eye overlay on webcam
+
 "python main.py -func g -img imagename.jpg" displays a mustache overlay on an individual image
+
 "python main.py -func d"  displays a mustache detection overlay on webcam
 
 Requirements:
