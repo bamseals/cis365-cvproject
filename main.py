@@ -1,5 +1,6 @@
 import cv2
 import os
+import argparse
 
 def getLocalFile(filePath):
     cwd = os.getcwd()
@@ -8,10 +9,9 @@ def getLocalFile(filePath):
 
 # for testing cascades on images
 def cascadeTest():
-    cwd = os.getcwd()
-    cascadeFile = getLocalFile('\cascades\mustache7.xml')
+    cascadeFile = getLocalFile('\cascades\mustache8.xml')
     cascade = cv2.CascadeClassifier(cascadeFile)
-    imageFile = getLocalFile("\\testimg\\5.jpg")
+    imageFile = getLocalFile("\\testimg\\19.jpg")
     #face_classifier = cv2.CascadeClassifier('/haarcascade_frontalface_default.xml')
     img = cv2.imread(imageFile)
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -20,14 +20,11 @@ def cascadeTest():
     for cords in detected:
         print(type(cords[0]))
         image = cv2.rectangle(img,(cords[0],cords[1]),(cords[0]+cords[2],cords[1]+cords[3]), (255, 0, 0), 1)
-        cv2.imwrite("testimg/5_7.jpg",image)
-
-# cascadeTest()
+        cv2.imwrite("testimg/19_8.jpg",image)
 
 # for testing cascades on video
 def videoTest():
-    cwd = os.getcwd()
-    cascadeFile =  getLocalFile('\cascades\mustache7.xml')
+    cascadeFile = getLocalFile('\cascades\mustache8.xml')
     cascade = cv2.CascadeClassifier(cascadeFile)
     stream = cv2.VideoCapture(0)
     while True:
@@ -43,11 +40,11 @@ def videoTest():
     stream.release()
     cv2.destroyAllWindows()
 
-# videoTest()
+def mustacheDetectVideo():
+    cascadeFile = getLocalFile('\cascades\mustache8.xml')
 
 # handle adding a mustache to an image or frame
 def processMustacheify(img):
-    cwd = os.getcwd()
     faceCascadeFile = getLocalFile('\cascades\pretrained\haarcascade_frontalface_default.xml')
     noseCascadeFile = getLocalFile('\cascades\pretrained\haarcascade_mcs_nose.xml')
     faceCascade = cv2.CascadeClassifier(faceCascadeFile)
@@ -60,18 +57,17 @@ def processMustacheify(img):
     img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     faces = faceCascade.detectMultiScale(img_grey)
     for (x, y, w, h) in faces:
-        # cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),1)
         face_grey = img_grey[y:y+h, x:x+w]
         face_color = img[y:y+h, x:x+w]
         nose = noseCascade.detectMultiScale(face_grey)
         for (nx,ny,nw,nh) in nose:
-            # cv2.rectangle(face_color,(nx,ny),(nx+nw,ny+nh),(0,255,0),1)
             mustacheWidth =  3 * nw
             mustacheHeight = mustacheWidth * origHeight / origWidth
             x1 = int(nx - (mustacheWidth/4))
             x2 = int(nx + nw + (mustacheWidth/4))
             y1 = int(ny + nh - (mustacheHeight/2))
             y2 = int(ny + nh + (mustacheHeight/2))
+            #prevent from exceeding the bounds of the face, which causes errors
             if x1 < 0:
                 x1 = 0
             if y1 < 0:
@@ -91,7 +87,6 @@ def processMustacheify(img):
             overlay = cv2.add(background,foreground)
             face_color[y1:y2, x1:x2] = overlay
     return img
-    
 
 # add mustaches to faces on video
 def mustacheifyVideo():
@@ -105,12 +100,14 @@ def mustacheifyVideo():
             break
     stream.release()
     cv2.destroyAllWindows()
-        
-mustacheifyVideo()
 
+def mustacheifyImg(file):
+    img = cv2.imread(file)
+    output = processMustacheify(img)
+    cv2.imshow(output)
+        
 # process an image or frame, add google eyes
 def processGoogleEye(img):
-    cwd = os.getcwd()
     faceCascadeFile = getLocalFile('\cascades\pretrained\haarcascade_frontalface_default.xml')
     eyeCascadeFile = getLocalFile('\cascades\pretrained\haarcascade_eye.xml')
     faceCascade = cv2.CascadeClassifier(faceCascadeFile)
@@ -168,6 +165,30 @@ def googleEyeVideo():
     stream.release()
     cv2.destroyAllWindows()
 
-googleEyeVideo()
+def googleEyeImg(file):
+    img = cv2.imread(file)
+    output = processGoogleEye(img)
+    cv2.imshow(output)
 
-
+### handle args ###
+parser = argparse.ArgumentParser()
+parser.add_argument("-func", help="which function to run (mustacheify, googleeye, etc..)")
+parser.add_argument("-img", help="image to run function, if none with run video")
+args = parser.parse_args()
+func = str(args.func).lower()
+img = str(args.img).lower()
+if (func == 'm' or func == 'mustache' or func == 'mustacheify'):
+    if img != 'none':
+        mustacheifyImg(img)
+    else:
+        mustacheifyVideo()
+elif (func == 'g' or func == 'google' or func == 'googleeye' or func == 'googleeyes'):
+    if img != 'none':
+        googleEyeImg(img)
+    else:
+        googleEyeVideo()
+elif (func == 't' or func == 'test'):
+    if img != 'none':
+        cascadeTest()
+    else:
+        videoTest()
