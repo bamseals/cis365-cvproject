@@ -1,6 +1,7 @@
 import cv2
 import os
 import argparse
+import numpy as np
 
 def getLocalFile(filePath):
     cwd = os.getcwd()
@@ -128,7 +129,7 @@ def processMustacheify(img):
             x2 = int(nx + nw + (mustacheWidth/4))
             y1 = int(ny + nh - (mustacheHeight/2))
             y2 = int(ny + nh + (mustacheHeight/2))
-            #prevent from exceeding the bounds of the face, which causes errors
+            # prevent from exceeding the bounds of the face, which causes errors
             if x1 < 0:
                 x1 = 0
             if y1 < 0:
@@ -239,6 +240,93 @@ def googleEyeImg(file):
         if k == 27:
             break
 
+def faceSwap():
+    faceCascadeFile = getLocalFile('\cascades\pretrained\haarcascade_frontalface_default.xml')
+    faceCascade = cv2.CascadeClassifier(faceCascadeFile)
+    # Start up the camera
+    stream = cv2.VideoCapture(0)
+
+    face1 = None
+    face2 = None
+    while True:
+        # Read the camera in values rather than actual 'pixels'
+        _, img = stream.read()
+
+        # Read the Image(s) for faces in grayscale
+        img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        faces = faceCascade.detectMultiScale(img_grey)
+
+        # (x,y) and (x+w, y+h) are the bounds of the rectangle that outlines each face
+        #   (w and h are distances (positive) from the x and y values)
+        #   (or better known, width and height)
+        #
+        # Usually finding features on faces, like eyes, work better within this 'for' loop, \
+        #   because the classifier doesn't have to 'search' as far.
+        #   For example, if you wanted to look for eyes, you generate a frame (sub-image) from the face coords \
+        #       faceROI = frame_gray[y:y+h, x:x+w]
+        #       eyes = eyes_cascade.detectMultiScale(faceROI)
+        #       for (x2,y2,w2,h2):
+        #           ...
+
+        # Store the face images
+        if len(faces) == 2:
+            a1, b1, c1, d1 = faces[0]
+            a2, b2, c2, d2 = faces[1]
+            d = max(d1,d2)
+            c = max(c1,c2)
+
+            f1a2 = a1+c
+            f2a2 = a2+c
+            f1b2 = b1+d
+            f2b2 = b2+d
+
+            if a1 < 0:
+                a1 = 0
+            if a2 < 0:
+                a2 = 0
+            if b1 < 0:
+                b1 = 0
+            if b2 < 0:
+                b2 = 0
+
+            if f1a2 > 1:
+                f1a2 = a1
+            if f2a2 > 1:
+                f2a2 = a2
+            if f1b2 > 1:
+                f1b2 = b1
+            if f2b2 > 1:
+                f1b1 = b2
+
+            face1loc = faces[0]
+            #face1 = img[b1:f1b2, a1:f1a2]
+            face1 = img[20:28, 20:28]
+            print(face1.shape)
+
+            face2loc = faces[1]
+            # todo: img sizes differ, causing errors
+            #face2 = img[b2:b2+d, a2:a2+c]
+            face2 = img[28:36, 28:36]
+            print(face2.shape)
+
+
+            # Overlay opposing faces onto each other
+            mask = np.zeros(img.shape[:2], dtype=np.uint8)
+            #maskface1 = cv2.bitwise_and(face1, face1, mask=mask)
+            #maskface2 = cv2.bitwise_and(face2, face2, mask=mask)
+            overlay1 = cv2.add(face2, face1)
+
+        for (x, y, w, h) in faces:
+            cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),1)
+
+        cv2.imshow('img', img)
+        k = cv2.waitKey(30) & 0xff
+        if k == 27:
+            break
+
+    stream.release()
+    cv2.destroyAllWindows()
+
 ### handle args ###
 parser = argparse.ArgumentParser()
 parser.add_argument("-func", help="which function to run (mustacheify, googleeye, etc..)")
@@ -266,3 +354,6 @@ elif (func == 'd' or func == 'detect'):
         mustacheDetectImg(img)
     else:
         mustacheDetectVideo()
+# NOTE: Currently non-functional - issue with face sizes or something
+elif (func == 'f' or func == 'faceswap'):
+    faceSwap()
