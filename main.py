@@ -251,6 +251,9 @@ def googleEyeImg(file):
             break
         
 def processFaceSwap(img):
+    # NOTE FOR THIS FUNCTION: If you want to use squares/areas of equal size, uncomment out the '''...''' sections
+    #   and comment out their counterparts instead (if applicable).
+    # This function is currently oriented to switch faces onto each other with opposing sizes.
     faceCascadeFile = getLocalFile(r'/cascades/pretrained/haarcascade_frontalface_default.xml')
     faceCascade = cv2.CascadeClassifier(faceCascadeFile)
     # Read the Image(s) for faces in grayscale
@@ -289,6 +292,7 @@ def processFaceSwap(img):
             f2d1 -= 0 - f2b1
             f2b1 = 0
 
+        '''
         # Max face size is the larger width/heights of the two
         d = max(f1d1, f2d1)
         c = max(f1c1, f2c1)
@@ -298,6 +302,7 @@ def processFaceSwap(img):
         f2a2 = f2a1 + c
         f1b2 = f1b1 + d
         f2b2 = f2b1 + d
+        '''
 
         # The following is adjusted due to the failure of the face1 = img[] lines
         #   to properly store the data from the image. While the indices are correct, the
@@ -309,22 +314,32 @@ def processFaceSwap(img):
         #   The solution was, rather than base that on the size of the resized imaged, base it on the
         #   original image sizes, which somehow worked.
 
+        '''
         # Store the faces to be switched
         face1 = img[f1b1:f1b2, f1a1:f1a2]
         face2 = img[f2b1:f2b2, f2a1:f2a2]
+        '''
+        face1 = img[f1b1:f1b1 + f1d1, f1a1:f1a1 + f1c1]
+        face2 = img[f2b1:f2b1 + f2d1, f2a1:f2a1 + f1c1]
 
         # Resize the face images to be equal, because sometimes the normalization messes up
+
         face1Resized = cv2.resize(face1, (face2.shape[1], face2.shape[0]), interpolation=cv2.INTER_AREA)
         face2Resized = cv2.resize(face2, (face1.shape[1], face1.shape[0]), interpolation=cv2.INTER_AREA)
 
         # Replace that area in the display to be the opposing face
+        '''
         img[f1b1:f1b2, f1a1:f1a2] = face2Resized
         img[f2b1:f2b2, f2a1:f2a2] = face1Resized
-
-    # Outline areas being switched for assistance in understanding function
-    # for (x, y, w, h) in faces:
-    #     cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 1)
+        '''
+        img[f1b1:f1b1 + face1.shape[0], f1a1:f1a1 + face1.shape[1]] = face2Resized
+        img[f2b1:f2b1 + face2.shape[0], f2a1:f2a1 + face2.shape[1]] = face1Resized
+    else:
+        # Outline areas being switched for assistance in understanding function
+        for (x, y, w, h) in faces:
+            cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 1)
     return img
+
 
 def faceSwap():
     faceCascadeFile = getLocalFile(r'/cascades/pretrained/haarcascade_frontalface_default.xml')
@@ -347,6 +362,7 @@ def faceSwap():
 
     stream.release()
     cv2.destroyAllWindows()
+
 
 def faceSwapImg(file):
     img = cv2.imread(file)
