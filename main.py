@@ -252,7 +252,7 @@ def googleEyeImg(file):
 
 
 def faceSwap():
-    faceCascadeFile = getLocalFile('cascades/pretrained/haarcascade_frontalface_default.xml')
+    faceCascadeFile = getLocalFile(r'/cascades/pretrained/haarcascade_frontalface_default.xml')
     faceCascade = cv2.CascadeClassifier(faceCascadeFile)
     # Start up the camera
     stream = cv2.VideoCapture(0)
@@ -280,57 +280,49 @@ def faceSwap():
         #           ...
 
         # Store the face images
-        if len(faces) == 2:
-            a1, b1, c1, d1 = faces[0]
-            a2, b2, c2, d2 = faces[1]
-            d = max(d1, d2)
-            c = max(c1, c2)
+        if len(faces) >= 2:
+            f1a1, f1b1, f1c1, f1d1 = faces[0]
+            f2a1, f2b1, f2c1, f2d1 = faces[1]
 
-            f1a2 = a1 + c
-            f2a2 = a2 + c
-            f1b2 = b1 + d
-            f2b2 = b2 + d
+            # Max face size is the larger width/heights of the two
+            d = max(f1d1, f2d1)
+            c = max(f1c1, f2c1)
 
-            if a1 < 0:
-                a1 = 0
-            if a2 < 0:
-                a2 = 0
-            if b1 < 0:
-                b1 = 0
-            if b2 < 0:
-                b2 = 0
+            f1a2 = f1a1 + c
+            f2a2 = f2a1 + c
+            f1b2 = f1b1 + d
+            f2b2 = f2b1 + d
 
-            if f1a2 > 1:
-                f1a2 = a1
-            if f2a2 > 1:
-                f2a2 = a2
-            if f1b2 > 1:
-                f1b2 = b1
-            if f2b2 > 1:
-                f1b1 = b2
+            if f1a1 < 0:
+                f1a1 = 0
+            if f2a1 < 0:
+                f2a1 = 0
+            if f1b1 < 0:
+                f1b1 = 0
+            if f2b1 < 0:
+                f2b1 = 0
 
-            face1loc = faces[0]
-            # face1 = img[b1:f1b2, a1:f1a2]
-            face1 = img[20:28, 20:28]
-            print(face1.shape)
+            # Store the faces to be switched
+            face1 = img[f1b1:f1b2, f1a1:f1a2]
+            face2 = img[f2b1:f2b2, f2a1:f2a2]
 
-            face2loc = faces[1]
-            # todo: img sizes differ, causing errors
-            # face2 = img[b2:b2+d, a2:a2+c]
-            face2 = img[28:36, 28:36]
-            print(face2.shape)
+            face1Resized = cv2.resize(face1, (c, d), interpolation=cv2.INTER_AREA)
+            face2Resized = cv2.resize(face2, (c, d), interpolation=cv2.INTER_AREA)
 
             # Overlay opposing faces onto each other
-            mask = np.zeros(img.shape[:2], dtype=np.uint8)
-            # maskface1 = cv2.bitwise_and(face1, face1, mask=mask)
-            # maskface2 = cv2.bitwise_and(face2, face2, mask=mask)
-            overlay1 = cv2.add(face2, face1)
+            overlay2 = cv2.add(face2Resized, face1Resized)
+            overlay1 = cv2.add(face1Resized, face2Resized)
+
+            img[f2b1:f2b2, f2a1:f2a2] = overlay2
+            img[f1b1:f1b2, f1a1:f1a2] = overlay1
+
+        cv2.imshow('img', img)
 
         for (x, y, w, h) in faces:
             cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 1)
 
-        cv2.imshow('img', img)
-        k = cv2.waitKey(30) & 0xff
+        # Quit condition: press Esc to quit (ASCII = 27)
+        k = cv2.waitKey(50) & 0xff
         if k == 27:
             break
 
@@ -417,7 +409,5 @@ elif (func == 'c' or func == 'catify'):
                 break
     else:
         catifyVideo()
-
-# NOTE: Currently non-functional - issue with face sizes or something
 elif (func == 'f' or func == 'faceswap'):
     faceSwap()
