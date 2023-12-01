@@ -249,12 +249,84 @@ def googleEyeImg(file):
         k = cv2.waitKey(30) & 0xff
         if k == 27:
             break
+        
+def processFaceSwap(img):
+    faceCascadeFile = getLocalFile(r'/cascades/pretrained/haarcascade_frontalface_default.xml')
+    faceCascade = cv2.CascadeClassifier(faceCascadeFile)
+    # Read the Image(s) for faces in grayscale
+    img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    faces = faceCascade.detectMultiScale(img_grey)
 
+    # (x,y) and (x+w, y+h) are the bounds of the rectangle that outlines each face
+    #   (w and h are distances (positive) from the x and y values)
+    #   (or better known, width and height)
+    #
+    # Usually finding features on faces, like eyes, work better within this 'for' loop, \
+    #   because the classifier doesn't have to 'search' as far.
+    #   For example, if you wanted to look for eyes, you generate a frame (sub-image) from the face coords \
+    #       faceROI = frame_gray[y:y+h, x:x+w]
+    #       eyes = eyes_cascade.detectMultiScale(faceROI)
+    #       for (x2,y2,w2,h2):
+    #           ...
+
+    # Store the face images
+    if len(faces) >= 2:
+        f1a1, f1b1, f1c1, f1d1 = faces[0]
+        f2a1, f2b1, f2c1, f2d1 = faces[1]
+
+        # Ensure that image values are within acceptable parameters
+        #   Also updates image width/height if shortened.
+        if f1a1 < 0:
+            f1c1 -= 0 - f1a1
+            f1a1 = 0
+        if f2a1 < 0:
+            f2c1 -= 0 - f2a1
+            f2a1 = 0
+        if f1b1 < 0:
+            f1d1 -= 0 - f1b1
+            f1b1 = 0
+        if f2b1 < 0:
+            f2d1 -= 0 - f2b1
+            f2b1 = 0
+
+        # Max face size is the larger width/heights of the two
+        d = max(f1d1, f2d1)
+        c = max(f1c1, f2c1)
+
+        # Normalize the sizes of the images to be extracted to be the same
+        f1a2 = f1a1 + c
+        f2a2 = f2a1 + c
+        f1b2 = f1b1 + d
+        f2b2 = f2b1 + d
+
+        # The following is adjusted due to the failure of the face1 = img[] lines
+        #   to properly store the data from the image. While the indices are correct, the
+        #   actual size of the images tends to differ. There are likely null pixels or
+        #   pixels that do not store information that are within these bounds, which
+        #   artificially shorten the image sizes.
+        # Essentially, rather than resizing to c and d, the workaround is that they resize to each other's sizes
+        #   Then, a similar issue (to the prev paragraph) occurred with the img[] = face... lines
+        #   The solution was, rather than base that on the size of the resized imaged, base it on the
+        #   original image sizes, which somehow worked.
+
+        # Store the faces to be switched
+        face1 = img[f1b1:f1b2, f1a1:f1a2]
+        face2 = img[f2b1:f2b2, f2a1:f2a2]
+
+        # Resize the face images to be equal, because sometimes the normalization messes up
+        face1Resized = cv2.resize(face1, (face2.shape[1], face2.shape[0]), interpolation=cv2.INTER_AREA)
+        face2Resized = cv2.resize(face2, (face1.shape[1], face1.shape[0]), interpolation=cv2.INTER_AREA)
+
+        # Replace that area in the display to be the opposing face
+        img[f1b1:f1b2, f1a1:f1a2] = face2Resized
+        img[f2b1:f2b2, f2a1:f2a2] = face1Resized
+
+    # Outline areas being switched for assistance in understanding function
+    # for (x, y, w, h) in faces:
+    #     cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 1)
+    return img
 
 def faceSwap():
-    # NOTE FOR THIS FUNCTION: If you want to use squares/areas of equal size, uncomment out the '''...''' sections
-    #   and comment out their counterparts instead (if applicable).
-    # This function is currently oriented to switch faces onto each other with opposing sizes.
     faceCascadeFile = getLocalFile(r'/cascades/pretrained/haarcascade_frontalface_default.xml')
     faceCascade = cv2.CascadeClassifier(faceCascadeFile)
     # Start up the camera
@@ -263,88 +335,7 @@ def faceSwap():
     while True:
         # Read the camera in values rather than actual 'pixels'
         _, img = stream.read()
-
-        # Read the Image(s) for faces in grayscale
-        img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        faces = faceCascade.detectMultiScale(img_grey)
-
-        # (x,y) and (x+w, y+h) are the bounds of the rectangle that outlines each face
-        #   (w and h are distances (positive) from the x and y values)
-        #   (or better known, width and height)
-        #
-        # Usually finding features on faces, like eyes, work better within this 'for' loop, \
-        #   because the classifier doesn't have to 'search' as far.
-        #   For example, if you wanted to look for eyes, you generate a frame (sub-image) from the face coords \
-        #       faceROI = frame_gray[y:y+h, x:x+w]
-        #       eyes = eyes_cascade.detectMultiScale(faceROI)
-        #       for (x2,y2,w2,h2):
-        #           ...
-
-        # Store the face images
-        if len(faces) >= 2:
-            f1a1, f1b1, f1c1, f1d1 = faces[0]
-            f2a1, f2b1, f2c1, f2d1 = faces[1]
-
-            # Ensure that image values are within acceptable parameters
-            #   Also updates image width/height if shortened.
-            if f1a1 < 0:
-                f1c1 -= 0 - f1a1
-                f1a1 = 0
-            if f2a1 < 0:
-                f2c1 -= 0 - f2a1
-                f2a1 = 0
-            if f1b1 < 0:
-                f1d1 -= 0 - f1b1
-                f1b1 = 0
-            if f2b1 < 0:
-                f2d1 -= 0 - f2b1
-                f2b1 = 0
-
-            '''
-            # Max face size is the larger width/heights of the two
-            d = max(f1d1, f2d1)
-            c = max(f1c1, f2c1)
-
-            # Normalize the sizes of the images to be extracted to be the same
-            f1a2 = f1a1 + c
-            f2a2 = f2a1 + c
-            f1b2 = f1b1 + d
-            f2b2 = f2b1 + d
-            '''
-            # The following is adjusted due to the failure of the face1 = img[] lines
-            #   to properly store the data from the image. While the indices are correct, the
-            #   actual size of the images tends to differ. There are likely null pixels or
-            #   pixels that do not store information that are within these bounds, which
-            #   artificially shorten the image sizes.
-            # Essentially, rather than resizing to c and d, the workaround is that they resize to each other's sizes
-            #   Then, a similar issue (to the prev paragraph) occurred with the img[] = face... lines
-            #   The solution was, rather than base that on the size of the resized imaged, base it on the
-            #   original image sizes, which somehow worked.
-
-            # Store the faces to be switched
-            '''
-            face1 = img[f1b1:f1b2, f1a1:f1a2]
-            face2 = img[f2b1:f2b2, f2a1:f2a2]
-            '''
-            face1 = img[f1b1:f1b1+f1d1, f1a1:f1a1+f1c1]
-            face2 = img[f2b1:f2b1+f2d1, f2a1:f2a1+f1c1]
-
-            # Resize the face images to be equal, because sometimes the normalization messes up
-            face1Resized = cv2.resize(face1, (face2.shape[1], face2.shape[0]), interpolation=cv2.INTER_AREA)
-            face2Resized = cv2.resize(face2, (face1.shape[1], face1.shape[0]), interpolation=cv2.INTER_AREA)
-
-            # Replace that area in the display to be the opposing face
-            '''
-            img[f1b1:f1b2, f1a1:f1a2] = face2Resized
-            img[f2b1:f2b2, f2a1:f2a2] = face1Resized
-            '''
-            img[f1b1:f1b1+face1.shape[0], f1a1:f1a1+face1.shape[1]] = face2Resized
-            img[f2b1:f2b1+face2.shape[0], f2a1:f2a1+face2.shape[1]] = face1Resized
-        else:
-            # Outline areas being switched for assistance in people understanding what the computer sees as a face
-            #   while waiting for 2 faces to be recognized.
-            for (x, y, w, h) in faces:
-                cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 1)
+        img = processFaceSwap(img)
 
         # Display the image
         cv2.imshow('img', img)
@@ -356,6 +347,15 @@ def faceSwap():
 
     stream.release()
     cv2.destroyAllWindows()
+
+def faceSwapImg(file):
+    img = cv2.imread(file)
+    output = processFaceSwap(img)
+    while True:
+        cv2.imshow('img', output)
+        k = cv2.waitKey(30) & 0xff
+        if k == 27:
+            break
 
 
 def catifyFaces(img):
@@ -438,4 +438,7 @@ elif (func == 'c' or func == 'catify'):
     else:
         catifyVideo()
 elif (func == 'f' or func == 'faceswap'):
-    faceSwap()
+    if img != 'None':
+        faceSwapImg(img)
+    else:
+        faceSwap()
