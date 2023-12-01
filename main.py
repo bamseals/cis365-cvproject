@@ -257,8 +257,6 @@ def faceSwap():
     # Start up the camera
     stream = cv2.VideoCapture(0)
 
-    face1 = None
-    face2 = None
     while True:
         # Read the camera in values rather than actual 'pixels'
         _, img = stream.read()
@@ -284,42 +282,59 @@ def faceSwap():
             f1a1, f1b1, f1c1, f1d1 = faces[0]
             f2a1, f2b1, f2c1, f2d1 = faces[1]
 
+            # Ensure that image values are within acceptable parameters
+            #   Also updates image width/height if shortened.
+            if f1a1 < 0:
+                f1c1 -= 0 - f1a1
+                f1a1 = 0
+            if f2a1 < 0:
+                f2c1 -= 0 - f2a1
+                f2a1 = 0
+            if f1b1 < 0:
+                f1d1 -= 0 - f1b1
+                f1b1 = 0
+            if f2b1 < 0:
+                f2d1 -= 0 - f2b1
+                f2b1 = 0
+
             # Max face size is the larger width/heights of the two
             d = max(f1d1, f2d1)
             c = max(f1c1, f2c1)
 
+            # Normalize the sizes of the images to be extracted to be the same
             f1a2 = f1a1 + c
             f2a2 = f2a1 + c
             f1b2 = f1b1 + d
             f2b2 = f2b1 + d
 
-            if f1a1 < 0:
-                f1a1 = 0
-            if f2a1 < 0:
-                f2a1 = 0
-            if f1b1 < 0:
-                f1b1 = 0
-            if f2b1 < 0:
-                f2b1 = 0
+            # The following is adjusted due to the failure of the face1 = img[] lines
+            #   to properly store the data from the image. While the indices are correct, the
+            #   actual size of the images tends to differ. There are likely null pixels or
+            #   pixels that do not store information that are within these bounds, which
+            #   artificially shorten the image sizes.
+            # Essentially, rather than resizing to c and d, the workaround is that they resize to each other's sizes
+            #   Then, a similar issue (to the prev paragraph) occurred with the img[] = face... lines
+            #   The solution was, rather than base that on the size of the resized imaged, base it on the
+            #   original image sizes, which somehow worked.
 
             # Store the faces to be switched
             face1 = img[f1b1:f1b2, f1a1:f1a2]
             face2 = img[f2b1:f2b2, f2a1:f2a2]
 
-            face1Resized = cv2.resize(face1, (c, d), interpolation=cv2.INTER_AREA)
-            face2Resized = cv2.resize(face2, (c, d), interpolation=cv2.INTER_AREA)
+            # Resize the face images to be equal, because sometimes the normalization messes up
+            face1Resized = cv2.resize(face1, (face2.shape[1], face2.shape[0]), interpolation=cv2.INTER_AREA)
+            face2Resized = cv2.resize(face2, (face1.shape[1], face1.shape[0]), interpolation=cv2.INTER_AREA)
 
-            # Overlay opposing faces onto each other
-            overlay2 = cv2.add(face2Resized, face1Resized)
-            overlay1 = cv2.add(face1Resized, face2Resized)
+            # Replace that area in the display to be the opposing face
+            img[f1b1:f1b2, f1a1:f1a2] = face2Resized
+            img[f2b1:f2b2, f2a1:f2a2] = face1Resized
 
-            img[f2b1:f2b2, f2a1:f2a2] = overlay2
-            img[f1b1:f1b2, f1a1:f1a2] = overlay1
-
-        cv2.imshow('img', img)
-
+        # Outline areas being switched for assistance in understanding function
         for (x, y, w, h) in faces:
             cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 1)
+
+        # Display the image
+        cv2.imshow('img', img)
 
         # Quit condition: press Esc to quit (ASCII = 27)
         k = cv2.waitKey(50) & 0xff
