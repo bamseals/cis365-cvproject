@@ -1,7 +1,6 @@
 import cv2
 import os
 import argparse
-import numpy as np
 
 
 def getLocalFile(filePath):
@@ -253,10 +252,14 @@ def googleEyeImg(file):
 def processFaceSwap(img):
     # NOTE FOR THIS FUNCTION: If you want to use squares/areas of equal size, uncomment out the '''...''' sections
     #   and comment out their counterparts instead (if applicable).
+
     # This function is currently oriented to switch faces onto each other with opposing sizes.
+
+    # Load the Cascade
     faceCascadeFile = getLocalFile(r'/cascades/pretrained/haarcascade_frontalface_default.xml')
     faceCascade = cv2.CascadeClassifier(faceCascadeFile)
-    # Read the Image(s) for faces in grayscale
+
+    # Read the image for faces, in grayscale
     img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     faces = faceCascade.detectMultiScale(img_grey)
 
@@ -264,16 +267,16 @@ def processFaceSwap(img):
     #   (w and h are distances (positive) from the x and y values)
     #   (or better known, width and height)
     #
-    # Usually finding features on faces, like eyes, work better within this 'for' loop, \
+    # Usually, finding features on faces like eyes, work better within this 'for' loop, \
     #   because the classifier doesn't have to 'search' as far.
-    #   For example, if you wanted to look for eyes, you generate a frame (sub-image) from the face coords \
+    #   For example, if you wanted to look for eyes, you generate a frame (sub-image) from the face coords:
     #       faceROI = frame_gray[y:y+h, x:x+w]
     #       eyes = eyes_cascade.detectMultiScale(faceROI)
     #       for (x2,y2,w2,h2):
     #           ...
 
-    # Store the face images
     if len(faces) >= 2:
+        # Store data on the faces, such as width (f1c1,f2c1) and height (f1d1,f2d1)
         f1a1, f1b1, f1c1, f1d1 = faces[0]
         f2a1, f2b1, f2c1, f2d1 = faces[1]
 
@@ -311,7 +314,7 @@ def processFaceSwap(img):
         #   artificially shorten the image sizes.
         # Essentially, rather than resizing to c and d, the workaround is that they resize to each other's sizes
         #   Then, a similar issue (to the prev paragraph) occurred with the img[] = face... lines
-        #   The solution was, rather than base that on the size of the resized imaged, base it on the
+        #   The solution was, rather than base the indices there on the size of the resized imaged, we base it on the
         #   original image sizes, which somehow worked.
 
         '''
@@ -322,8 +325,7 @@ def processFaceSwap(img):
         face1 = img[f1b1:f1b1 + f1d1, f1a1:f1a1 + f1c1]
         face2 = img[f2b1:f2b1 + f2d1, f2a1:f2a1 + f1c1]
 
-        # Resize the face images to be equal, because sometimes the normalization messes up
-
+        # Resize the face images to be the size of the faces they will be applied to
         face1Resized = cv2.resize(face1, (face2.shape[1], face2.shape[0]), interpolation=cv2.INTER_AREA)
         face2Resized = cv2.resize(face2, (face1.shape[1], face1.shape[0]), interpolation=cv2.INTER_AREA)
 
