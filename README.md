@@ -1,6 +1,9 @@
 # cis365-cvproject
 CIS 365 - Final Project - OpenCV Image Utilities
+
 Sam Beals, Brett Gritters, Travis Johnson
+
+https://github.com/bamseals/cis365-cvproject
 
  ---------- HOW TO USE ----------
 
