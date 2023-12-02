@@ -2,19 +2,35 @@
 CIS 365 - Final Project - OpenCV Image Utilities
 Sam Beals, Brett Gritters, Travis Johnson
 
-how to use:
+ ---------- HOW TO USE ----------
 
-"python main.py -func m" displays a mustache overlay on webcam
+** opencv-python must be installed locally (pip install opencv-python)
 
-"python main.py -func m -img imagename.jpg" displays a mustache overlay on an individual image
+From root project folder (/cis365-cvproject/) run any of the following commands:
 
-"python main.py -func g" displays a google eye overlay on webcam
+"python main.py -func d" displays mustache detection overlay on video stream from webcam
 
-"python main.py -func g -img imagename.jpg" displays a mustache overlay on an individual image
+"python main.py -func d -img imagename.jpg" displays a mustache detection overlay on an individual image
 
-"python main.py -func d"  displays a mustache detection overlay on webcam
+"python main.py -func m" display virtual mustache on detected faces/noses on video stream from webcam
 
-Requirements:
+"python main.py -func m -img imagename.jpg" display virtual mustache on detected faces/noses of individual image
+
+"python main.py -func g" display virtual google eyes over detected faces/eyes on video stream from webcam
+
+"python main.py -func g -img imagename.jpg" display virtual google eyes over detected faces/eyes on an individual image
+
+"python main.py -func c" display virtual cat face over detected faces on video stream from webcam
+
+"python main.py -func c -img imagename.jpg" display virtual cat face over detected faces on an individual image
+
+"python main.py -func f" display swapped faces for two detected faces on video stream from webcam
+
+"python main.py -func f -img imagename.jpg" display swapped faces for two detected faces on an individual image
+
+
+---------- Requirements ----------
+
 opencv-python
 https://pypi.org/project/opencv-python/
 
@@ -23,7 +39,7 @@ OpenCV - version 3.4.3 - Other versions may also work
 https://sourceforge.net/projects/opencvlibrary/files/opencv-win/3.4.3/
 
 
-Documentation, articles, and tutorials used:
+--- Helpful documentation, articles, and tutorials --- 
 
 https://docs.opencv.org/4.x/db/d28/tutorial_cascade_classifier.html
 

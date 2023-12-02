@@ -2,7 +2,6 @@ import cv2
 import os
 import argparse
 
-
 def getLocalFile(filePath):
     cwd = os.getcwd()
     path = cwd + filePath
@@ -43,15 +42,14 @@ def videoTest():
     stream.release()
     cv2.destroyAllWindows()
 
-
-def mustacheDetectImg(file):
+# process an image to display mustache detection overlay
+def processMustacheDetect(img):
     mustacheCascadeFile = getLocalFile('\cascades\mustache8.xml')
     faceCascadeFile = getLocalFile('\cascades\pretrained\haarcascade_frontalface_default.xml')
     noseCascadeFile = getLocalFile('\cascades\pretrained\haarcascade_mcs_nose.xml')
     mustacheCascade = cv2.CascadeClassifier(mustacheCascadeFile)
     faceCascade = cv2.CascadeClassifier(faceCascadeFile)
     noseCascade = cv2.CascadeClassifier(noseCascadeFile)
-    img = cv2.imread(file)
     img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     faces = faceCascade.detectMultiScale(img_grey)
     for (x, y, w, h) in faces:
@@ -68,39 +66,24 @@ def mustacheDetectImg(file):
         for (mx, my, mw, mh) in mustache:
             if my > nose_y:
                 cv2.rectangle(face_color, (mx, my), (mx + mw, my + mh), (0, 0, 255), 1)
+    return img
+
+# apply mustache detection overlay to specified image file
+def mustacheDetectImg(file):
+    img = cv2.imread(file)
+    output = processMustacheDetect(img)
     while True:
-        cv2.imshow('img', img)
+        cv2.imshow('img', output)
         k = cv2.waitKey(30) & 0xff
         if k == 27:
             break
 
-
+# display mustache detection overlay over video stream
 def mustacheDetectVideo():
-    mustacheCascadeFile = getLocalFile('\cascades\mustache8.xml')
-    faceCascadeFile = getLocalFile('\cascades\pretrained\haarcascade_frontalface_default.xml')
-    noseCascadeFile = getLocalFile('\cascades\pretrained\haarcascade_mcs_nose.xml')
-    mustacheCascade = cv2.CascadeClassifier(mustacheCascadeFile)
-    faceCascade = cv2.CascadeClassifier(faceCascadeFile)
-    noseCascade = cv2.CascadeClassifier(noseCascadeFile)
     stream = cv2.VideoCapture(0)
     while True:
         _, img = stream.read()
-        img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        faces = faceCascade.detectMultiScale(img_grey)
-        for (x, y, w, h) in faces:
-            cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 1)
-            face_grey = img_grey[y:y + h, x:x + w]
-            face_color = img[y:y + h, x:x + w]
-            nose_y = 0
-            nose = noseCascade.detectMultiScale(face_grey)
-            mustache = mustacheCascade.detectMultiScale(face_color)
-            for (nx, ny, nw, nh) in nose:
-                if ny > nose_y:
-                    nose_y = ny
-                cv2.rectangle(face_color, (nx, ny), (nx + nw, ny + nh), (0, 255, 0), 1)
-            for (mx, my, mw, mh) in mustache:
-                if my > nose_y:
-                    cv2.rectangle(face_color, (mx, my), (mx + mw, my + mh), (0, 0, 255), 1)
+        img = processMustacheDetect(img)
         cv2.imshow('img', img)
         k = cv2.waitKey(30) & 0xff
         if k == 27:
@@ -110,6 +93,7 @@ def mustacheDetectVideo():
 
 
 # handle adding a mustache to an image or frame
+# based on code in tutorial by Noah Dietrich: https://sublimerobots.com/2015/02/dancing-mustaches/
 def processMustacheify(img):
     faceCascadeFile = getLocalFile('\cascades\pretrained\haarcascade_frontalface_default.xml')
     noseCascadeFile = getLocalFile('\cascades\pretrained\haarcascade_mcs_nose.xml')
@@ -133,7 +117,7 @@ def processMustacheify(img):
             x2 = int(nx + nw + (mustacheWidth / 4))
             y1 = int(ny + nh - (mustacheHeight / 2))
             y2 = int(ny + nh + (mustacheHeight / 2))
-            # prevent from exceeding the bounds of the face, which causes errors
+            # prevent from exceeding the bounds of the face, which would cause errors
             if x1 < 0:
                 x1 = 0
             if y1 < 0:
@@ -168,7 +152,7 @@ def mustacheifyVideo():
     stream.release()
     cv2.destroyAllWindows()
 
-
+# display mustache on faces in specified image file
 def mustacheifyImg(file):
     img = cv2.imread(file)
     output = processMustacheify(img)
@@ -199,13 +183,11 @@ def processGoogleEye(img):
     img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     faces = faceCascade.detectMultiScale(img_grey)
     for (x, y, w, h) in faces:
-        # cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),1)
         face_grey = img_grey[y:y + h, x:x + w]
         face_color = img[y:y + h, x:x + w]
         eyes = eyeCascade.detectMultiScale(face_grey)
         eyeindex = 0
         for (ex, ey, ew, eh) in eyes:
-            # cv2.rectangle(face_color,(ex,ey),(ex+ew,ey+eh),(0,255,0),1)
             eyeindex += 1
             if eyeindex % 2 == 0:
                 eye = eye1
@@ -239,7 +221,7 @@ def googleEyeVideo():
     stream.release()
     cv2.destroyAllWindows()
 
-
+# apply google eyes to faces on specified image file
 def googleEyeImg(file):
     img = cv2.imread(file)
     output = processGoogleEye(img)
@@ -249,6 +231,7 @@ def googleEyeImg(file):
         if k == 27:
             break
         
+# perform a face swap on faces detected in an image
 def processFaceSwap(img):
     # NOTE FOR THIS FUNCTION: If you want to use squares/areas of equal size, uncomment out the '''...''' sections
     #   and comment out their counterparts instead (if applicable).
@@ -342,7 +325,7 @@ def processFaceSwap(img):
             cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 1)
     return img
 
-
+# swap faces found on video stream
 def faceSwap():
     faceCascadeFile = getLocalFile(r'/cascades/pretrained/haarcascade_frontalface_default.xml')
     faceCascade = cv2.CascadeClassifier(faceCascadeFile)
@@ -365,7 +348,7 @@ def faceSwap():
     stream.release()
     cv2.destroyAllWindows()
 
-
+# swap faces found in specified image file
 def faceSwapImg(file):
     img = cv2.imread(file)
     output = processFaceSwap(img)
@@ -375,7 +358,7 @@ def faceSwapImg(file):
         if k == 27:
             break
 
-
+# apply a cat face filter over detected faces
 def catifyFaces(img):
     catFaceFile = cv2.imread("img/cat.png", -1)  # Replace with your cat face overlay image
     catFace = catFaceFile[:, :, 0:3]
@@ -402,7 +385,7 @@ def catifyFaces(img):
 
     return img
 
-
+# apply cat filter over video stream
 def catifyVideo():
     stream = cv2.VideoCapture(0)
     while True:
@@ -419,7 +402,7 @@ def catifyVideo():
 ### handle args ###
 parser = argparse.ArgumentParser()
 parser.add_argument("-func", help="which function to run (mustacheify, googleeye, etc..)")
-parser.add_argument("-img", help="image to run function, if none with run video")
+parser.add_argument("-img", help="image to run function, if none will run video")
 args = parser.parse_args()
 func = str(args.func)
 img = str(args.img)
@@ -443,7 +426,6 @@ elif (func == 'd' or func == 'detect'):
         mustacheDetectImg(img)
     else:
         mustacheDetectVideo()
-
 elif (func == 'c' or func == 'catify'):
     if img != 'None':
         img = cv2.imread(img)
