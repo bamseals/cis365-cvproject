@@ -327,8 +327,6 @@ def processFaceSwap(img):
 
 # swap faces found on video stream
 def faceSwap():
-    faceCascadeFile = getLocalFile(r'/cascades/pretrained/haarcascade_frontalface_default.xml')
-    faceCascade = cv2.CascadeClassifier(faceCascadeFile)
     # Start up the camera
     stream = cv2.VideoCapture(0)
 
