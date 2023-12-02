@@ -317,8 +317,8 @@ def processFaceSwap(img):
         #   The solution was, rather than base the indices there on the size of the resized imaged, we base it on the
         #   original image sizes, which somehow worked.
 
-        '''
         # Store the faces to be switched
+        '''
         face1 = img[f1b1:f1b2, f1a1:f1a2]
         face2 = img[f2b1:f2b2, f2a1:f2a2]
         '''
